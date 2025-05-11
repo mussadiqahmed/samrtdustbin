@@ -28,8 +28,9 @@
       ]);
       const [selectedDustbin, setSelectedDustbin] = useState(null);
 
+      // Dustbin 1 updates every 1 second
       useEffect(() => {
-        const fetchRealDustbin = async () => {
+        const fetchDustbin1 = async () => {
           try {
             const response = await fetch("/.netlify/functions/dustbin");
             const data = await response.json();
@@ -37,16 +38,17 @@
               prev.map(d => (d.id === "dustbin1" ? data : d))
             );
           } catch (error) {
-            console.error("Error fetching dustbin data:", error);
+            console.error("Error fetching Dustbin 1:", error);
           }
         };
-        fetchRealDustbin();
-        const interval = setInterval(fetchRealDustbin, 30000);
-        return () => clearInterval(interval);
+        fetchDustbin1();
+        const interval1 = setInterval(fetchDustbin1, 1000);
+        return () => clearInterval(interval1);
       }, []);
 
+      // Other dustbins update every 15 seconds with random fill levels
       useEffect(() => {
-        const updateDummyDustbins = () => {
+        const updateOtherDustbins = () => {
           const fillOptions = [25, 50, 75, 100];
           setDustbins(prev =>
             prev.map(d =>
@@ -56,8 +58,9 @@
             )
           );
         };
-        const interval = setInterval(updateDummyDustbins, 60000);
-        return () => clearInterval(interval);
+        updateOtherDustbins();
+        const interval2 = setInterval(updateOtherDustbins, 15000);
+        return () => clearInterval(interval2);
       }, []);
 
       const DustbinCard = ({ dustbin }) => (
