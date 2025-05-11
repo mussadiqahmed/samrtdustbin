@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Dustbin Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+</head>
+<body class="bg-gray-100">
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function App() {
+      const [dustbins, setDustbins] = useState([
+        { id: "dustbin1", name: "Dustbin 1", location: "Main Street", fillPercent: 0, rawFillLevel: 0 },
+        { id: "dustbin2", name: "Dustbin 2", location: "Park Avenue", fillPercent: 25 },
+        { id: "dustbin3", name: "Dustbin 3", location: "City Square", fillPercent: 50 },
+        { id: "dustbin4", name: "Dustbin 4", location: "Mall Entrance", fillPercent: 75 },
+        { id: "dustbin5", name: "Dustbin 5", location: "Station Road", fillPercent: 100 },
+        { id: "dustbin6", name: "Dustbin 6", location: "Office Complex", fillPercent: 25 },
+        { id: "dustbin7", name: "Dustbin 7", location: "Residential Area", fillPercent: 50 },
+        { id: "dustbin8", name: "Dustbin 8", location: "Market Street", fillPercent: 75 }
+      ]);
+      const [selectedDustbin, setSelectedDustbin] = useState(null);
+
+      // Fetch real dustbin data
+      useEffect(() => {
+        const fetchRealDustbin = async () => {
+          try {
+            const response = await fetch("./dustbin");
+            const data = await response.json();
+            setDustbins((prev) =>
+              prev.map((d) => (d.id === "dustbin1" ? data : d))
+            );
+          } catch (error) {
+            console.error("Error fetching dustbin data:", error);
+          }
+        };
+        fetchRealDustbin();
+        const interval = setInterval(fetchRealDustbin, 30000); // Poll every 30 seconds
+        return () => clearInterval(interval);
+      }, []);
+
+      // Update dummy dustbins with random fill levels every minute
+      useEffect(() => {
+        const updateDummyDustbins = () => {
+          const fillOptions = [25, 50, 75, 100];
+          setDustbins((prev) =>
+            prev.map((dustbin) => {
+              if (dustbin.id !== "dustbin1") {
+                return {
+                  ...dustbin,
+                  fillPercent: fillOptions[Math.floor(Math.random() * fillOptions.length)]
+                };
+              }
+              return dustbin;
+            })
+          );
+        };
+        const interval = setInterval(updateDummyDustbins, 60000); // Update every minute
+        return () => clearInterval(interval);
+      }, []);
+
+      const DustbinCard = ({ dustbin }) => (
+        <div
+          className="bg-white p-4 rounded-lg shadow-md cursor-pointer hover:shadow-lg transition"
+          onClick={() => setSelectedDustbin(dustbin)}
+        >
+          <h3 className="text-lg font-semibold text-center">{dustbin.name}</h3>
+          <div className="relative w-24 h-32 mx-auto my-2">
+            <svg viewBox="0 0 100 120" className="w-full h-full">
+              {/* Dustbin body (cylindrical shape) */}
+              <path
+                d="M20 20 H80 V100 H20 Z M20 20 Q30 10, 50 10 Q70 10, 80 20"
+                fill="none"
+                stroke="gray"
+                strokeWidth="2"
+              />
+              {/* Fill level */}
+              <rect
+                x="22"
+                y={100 - (dustbin.fillPercent / 100) * 80}
+                width="56"
+                height={(dustbin.fillPercent / 100) * 80}
+                fill="#90EE90" // Light green
+              />
+              {/* Dustbin rim */}
+              <path d="M20 20 H80" stroke="gray" strokeWidth="2" />
+            </svg>
+          </div>
+          <p className="text-center">{dustbin.fillPercent}% Full</p>
+        </div>
+      );
+
+      const DustbinPopup = ({ dustbin, onClose }) => (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg max-w-lg w-full">
+            <h2 className="text-2xl font-bold mb-4 text-center">{dustbin.name}</h2>
+            <div className="relative w-48 h-64 mx-auto">
+              <svg viewBox="0 0 100 120" className="w-full h-full">
+                {/* Dustbin body (larger for popup) */}
+                <path
+                  d="M20 20 H80 V100 H20 Z M20 20 Q30 10, 50 10 Q70 10, 80 20"
+                  fill="none"
+                  stroke="gray"
+                  strokeWidth="3"
+                />
+                {/* Fill level */}
+                <rect
+                  x="22"
+                  y={100 - (dustbin.fillPercent / 100) * 80}
+                  width="56"
+                  height={(dustbin.fillPercent / 100) * 80}
+                  fill="#90EE90" // Light green
+                />
+                {/* Dustbin rim */}
+                <path d="M20 20 H80" stroke="gray" strokeWidth="3" />
+              </svg>
+            </div>
+            <p className="mt-4 text-center"><strong>Capacity:</strong> {dustbin.fillPercent}%</p>
+            {dustbin.rawFillLevel && (
+              <p className="text-center"><strong>Raw Fill Level:</strong> {dustbin.rawFillLevel.toFixed(2)}%</p>
+            )}
+            <p className="text-center"><strong>Location:</strong> {dustbin.location}</p>
+            <button
+              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 block mx-auto"
+              onClick={onClose}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      );
+
+      return (
+        <div className="min-h-screen bg-gray-100">
+          <header className="bg-blue-600 text-white py-6">
+            <h1 className="text-3xl font-bold text-center">Smart Dustbin Dashboard</h1>
+          </header>
+          <main className="container mx-auto p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+              {dustbins.map((dustbin) => (
+                <DustbinCard key={dustbin.id} dustbin={dustbin} />
+              ))}
+            </div>
+          </main>
+          {selectedDustbin && (
+            <DustbinPopup dustbin={selectedDustbin} onClose={() => setSelectedDustbin(null)} />
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById("root"));
+  </script>
+</body>
+</html>
