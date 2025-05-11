@@ -27,8 +27,23 @@
         { id: "dustbin8", name: "Dustbin 8", location: "Market Street", fillPercent: 75 }
       ]);
       const [selectedDustbin, setSelectedDustbin] = useState(null);
+useEffect(() => {
+  const fetchRealDustbin = async () => {
+    try {
+      const response = await fetch("/.netlify/functions/dustbin");
+      const data = await response.json();
+      setDustbins(prev =>
+        prev.map(d => (d.id === "dustbin1" ? data : d))
+      );
+    } catch (error) {
+      console.error("Error fetching dustbin data:", error);
+    }
+  };
+  fetchRealDustbin();
+  const interval = setInterval(fetchRealDustbin, 30000);
+  return () => clearInterval(interval);
+}, []);
 
-      useEffect(() => {
         const fetchRealDustbin = async () => {
           try {
             const response = await fetch("./dustbin");
